@@ -18,10 +18,21 @@ It resets Step_count := 0;
       This forces the next F1 to start exactly at a clean new second. By resetting the time base, the system will get back to the correct timing after F3 is late. 
 
 
-
 Part 3：Process Communication
 1. Show by a concrete scenario that the producer-consumer-buffer program using blocking rendezvous communication can have deadlocks and explain the mistake that can cause it.
+   A concrete deadlock scenario is the following:
+     - the buffer becomes full (Count = Size).
+     - the producer calls Buffer.Put(Value) and is now blocked in this rendezvous, waiting for the buffer to accept Put.
+     - the consumer reads values until Sum > 100, and then prints the termination message and calls Buffer.Stop.
+     - the buffer accepts the Stop entry from the consumer and starts executing the body of Stop.
+     - inside Stop, it sets Stopped := True, exits and no longer accepts any Put or Get entry.
+     - Producer.Stop is called by the consumer.
+     - the producer reminas blocked in its earlier call Put.
+     - the buffer has terminated and the producer is permanently waiting.
 
+Part 4: Data-driven synchronization
+1. Does the producer-consumer-buffer program using protected objects suffer from any potential deadlock? Explain why or why not.
+   Yes, there is still a potential deadlock, which is due to the same reason as mentioned in Part 3. If the buffer happens to be full when the consumer decides to terminate, the producer may be blocked at the entry barrier of Buffer.Put. Since the consumer has stopped, no further Get operations will occur, and Count will never decrease. As a result, the guard for Put remains false forever, and the producer remains blocked inside the protected entry’s waiting queue.
 
 
 
