@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.6//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+// ---- CPU interface ----
+int CPU1_C;
+chan CPU1_use, CPU1_done;
+
+int CPU2_C;
+chan CPU2_use, CPU2_done;
+
+// --- flags ----
+bool doneA=false, doneB=false, doneC=false, doneD=false, doneE=false;
+
+
+// ---- measure makespan ----
+clock y;                 // global time
+int done_counter = 0;    // number of finished jobs
+
+// ---- dependency tracking via bitmask ----
+// bit i == 1 means Job i is finished
+int done_mask = 0;
+
+</declaration>
+	<template>
+		<name x="5" y="5">CPU</name>
+		<parameter>chan &amp;use, chan &amp;done, int &amp;C </parameter>
+		<declaration>// Place local declarations here.
+clock x;
+</declaration>
+		<location id="id0" x="0" y="-178">
+			<name x="-10" y="-212">Idle</name>
+		</location>
+		<location id="id1" x="0" y="0">
+			<name x="-10" y="-34">InUse</name>
+			<label kind="invariant" x="-10" y="17">x &lt;= C</label>
+		</location>
+		<init ref="id0"/>
+		<transition id="id2">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="guard" x="-170" y="-110">x == C</label>
+			<label kind="synchronisation" x="-170" y="-85">done!</label>
+			<nail x="-102" y="0"/>
+			<nail x="-102" y="-178"/>
+		</transition>
+		<transition id="id3">
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="136" y="-127">use?</label>
+			<label kind="assignment" x="136" y="-102">x := 0</label>
+			<nail x="110" y="-178"/>
+			<nail x="110" y="0"/>
+		</transition>
+	</template>
+	<template>
+		<name>Job</name>
+		<parameter>int id, int C1, int C2, int dep_mask</parameter>
+		<location id="id4" x="-212" y="-76">
+			<name x="-280" y="-93">Ready</name>
+		</location>
+		<location id="id5" x="-68" y="-144">
+			<name x="-78" y="-178">RunCPU1</name>
+		</location>
+		<location id="id6" x="-68" y="-42">
+			<name x="-76" y="-25">RunCPU2</name>
+		</location>
+		<location id="id7" x="119" y="-85">
+			<name x="144" y="-93">Done</name>
+		</location>
+		<init ref="id4"/>
+		<transition id="id8">
+			<source ref="id6"/>
+			<target ref="id7"/>
+			<label kind="synchronisation" x="17" y="-59">CPU2_done?</label>
+			<label kind="assignment" x="17" y="-34">done_counter++, 
+done_mask |= (1 &lt;&lt; id)</label>
+		</transition>
+		<transition id="id9">
+			<source ref="id5"/>
+			<target ref="id7"/>
+			<label kind="synchronisation" x="17" y="-204">CPU1_done?</label>
+			<label kind="assignment" x="17" y="-178">done_counter++,
+done_mask |= (1 &lt;&lt; id)</label>
+		</transition>
+		<transition id="id10">
+			<source ref="id4"/>
+			<target ref="id6"/>
+			<label kind="guard" x="-365" y="0">(done_mask &amp; dep_mask) == dep_mask</label>
+			<label kind="synchronisation" x="-195" y="-51">CPU2_use!</label>
+			<label kind="assignment" x="-195" y="-25">CPU2_C = C2</label>
+		</transition>
+		<transition id="id11">
+			<source ref="id4"/>
+			<target ref="id5"/>
+			<label kind="guard" x="-391" y="-204">(done_mask &amp; dep_mask) == dep_mask</label>
+			<label kind="synchronisation" x="-195" y="-170">CPU1_use!</label>
+			<label kind="assignment" x="-204" y="-153">CPU1_C = C1</label>
+		</transition>
+	</template>
+	<system>// Place template instantiations here.
+CPU1 = CPU(CPU1_use, CPU1_done, CPU1_C);
+CPU2 = CPU(CPU2_use, CPU2_done, CPU2_C);
+
+JobA = Job(0, 1, 2, 0);
+JobB = Job(1, 4, 2, 0);
+JobC = Job(2, 5, 5, 1);
+JobD = Job(3, 2, 4, 3);
+JobE = Job(4, 3, 7, 2);
+JobF = Job(5, 7, 8, 4);
+JobG = Job(6, 1, 1, 12);
+JobH = Job(7, 5, 2, 80);
+JobI = Job(8, 3, 1, 16);
+
+// List one or more processes to be composed into a system.
+system  CPU1, CPU2, JobA, JobB, JobC, JobD, JobE, JobF, JobG, JobH, JobI;
+</system>
+	<queries>
+		<option key="--diagnostic" value="-1"/>
+		<query>
+			<formula>A[] (done_counter == 9 imply y &gt;= 14)
+</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2026-01-22 18:06:23 +0100">
+				<option key="--diagnostic" value="-1"/>
+			</result>
+		</query>
+		<query>
+			<formula>E&lt;&gt; (done_counter == 9 &amp;&amp; y &lt;= 14)
+</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2026-01-22 18:06:17 +0100">
+				<option key="--diagnostic" value="-1"/>
+			</result>
+		</query>
+		<query>
+			<formula>E&lt;&gt; done_counter == 9
+</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2026-01-22 18:05:26 +0100">
+				<option key="--diagnostic" value="2"/>
+			</result>
+		</query>
+	</queries>
+</nta>
