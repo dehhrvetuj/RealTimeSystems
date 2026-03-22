@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.6//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+// channels
+chan put, get, buffer_finish, producer_finish, consumer_finish;
+
+// shared state
+int items = 0;
+int total = 0; 
+
+
+</declaration>
+	<template>
+		<name x="5" y="5">Producer</name>
+		<declaration>// Place local declarations here.
+clock x;            // random delay</declaration>
+		<location id="id0" x="-272" y="-76">
+			<name x="-263" y="-119">loop</name>
+			<label kind="invariant" x="-348" y="-85">x &lt;= 3</label>
+		</location>
+		<location id="id1" x="-59" y="-76">
+			<name x="-85" y="-119">waitput</name>
+		</location>
+		<location id="id2" x="170" y="-76">
+			<name x="178" y="-110">afterput</name>
+		</location>
+		<location id="id3" x="-272" y="59">
+			<name x="-331" y="42">done</name>
+		</location>
+		<init ref="id0"/>
+		<transition id="id4">
+			<source ref="id1"/>
+			<target ref="id3"/>
+			<label kind="synchronisation" x="-254" y="42">producer_finish?</label>
+			<nail x="-59" y="59"/>
+		</transition>
+		<transition id="id5">
+			<source ref="id0"/>
+			<target ref="id3"/>
+			<label kind="synchronisation" x="-263" y="-25">producer_finish?</label>
+		</transition>
+		<transition id="id6">
+			<source ref="id2"/>
+			<target ref="id0"/>
+			<label kind="assignment" x="-85" y="-204">x := 0</label>
+			<nail x="170" y="-170"/>
+			<nail x="-272" y="-170"/>
+		</transition>
+		<transition id="id7">
+			<source ref="id1"/>
+			<target ref="id2"/>
+			<label kind="synchronisation" x="34" y="-102">put!</label>
+		</transition>
+		<transition id="id8">
+			<source ref="id0"/>
+			<target ref="id1"/>
+		</transition>
+	</template>
+	<template>
+		<name>Buffer</name>
+		<declaration>// Place local declarations here.
+clock x;            // random delay</declaration>
+		<location id="id9" x="-238" y="-59">
+			<name x="-297" y="-68">loop</name>
+		</location>
+		<location id="id10" x="-59" y="-136">
+			<name x="-69" y="-170">afterget</name>
+			<committed/>
+		</location>
+		<location id="id11" x="-59" y="17">
+			<name x="-69" y="-17">afterput</name>
+			<committed/>
+		</location>
+		<location id="id12" x="51" y="-59">
+			<name x="41" y="-93">done</name>
+		</location>
+		<init ref="id9"/>
+		<transition id="id13">
+			<source ref="id9"/>
+			<target ref="id11"/>
+			<label kind="guard" x="-221" y="-17">items &lt; 3</label>
+			<label kind="synchronisation" x="-221" y="-34">put?</label>
+		</transition>
+		<transition id="id14">
+			<source ref="id9"/>
+			<target ref="id10"/>
+			<label kind="guard" x="-221" y="-127">items &gt; 0</label>
+			<label kind="synchronisation" x="-221" y="-110">get?</label>
+		</transition>
+		<transition id="id15">
+			<source ref="id9"/>
+			<target ref="id12"/>
+			<label kind="synchronisation" x="-119" y="-85">buffer_finish?</label>
+		</transition>
+		<transition id="id16">
+			<source ref="id11"/>
+			<target ref="id9"/>
+			<label kind="assignment" x="-34" y="110">items++</label>
+			<nail x="246" y="17"/>
+			<nail x="246" y="102"/>
+			<nail x="-238" y="102"/>
+		</transition>
+		<transition id="id17">
+			<source ref="id10"/>
+			<target ref="id9"/>
+			<label kind="assignment" x="-34" y="-255">items--</label>
+			<nail x="246" y="-136"/>
+			<nail x="246" y="-229"/>
+			<nail x="-238" y="-229"/>
+		</transition>
+	</template>
+	<template>
+		<name>Consumer</name>
+		<declaration>// Place local declarations here.
+clock x;            // random delay</declaration>
+		<location id="id18" x="-212" y="-76">
+			<name x="-204" y="-110">loop</name>
+			<label kind="invariant" x="-289" y="-93">x &lt;= 3</label>
+		</location>
+		<location id="id19" x="0" y="-76">
+			<name x="-25" y="-110">waitget</name>
+		</location>
+		<location id="id20" x="221" y="-76">
+			<name x="229" y="-110">afterget</name>
+		</location>
+		<location id="id21" x="-212" y="68">
+			<name x="-229" y="85">break</name>
+		</location>
+		<location id="id22" x="0" y="68">
+			<name x="-59" y="85">finish_producer</name>
+		</location>
+		<location id="id23" x="221" y="68">
+			<name x="161" y="85">finish_buffer</name>
+		</location>
+		<location id="id24" x="382" y="68">
+			<name x="372" y="34">done</name>
+		</location>
+		<init ref="id18"/>
+		<transition id="id25">
+			<source ref="id23"/>
+			<target ref="id24"/>
+		</transition>
+		<transition id="id26">
+			<source ref="id22"/>
+			<target ref="id23"/>
+			<label kind="synchronisation" x="34" y="42">buffer_finish!</label>
+		</transition>
+		<transition id="id27">
+			<source ref="id21"/>
+			<target ref="id22"/>
+			<label kind="synchronisation" x="-170" y="42">producer_finish!</label>
+		</transition>
+		<transition id="id28">
+			<source ref="id18"/>
+			<target ref="id21"/>
+			<label kind="guard" x="-314" y="-8">total &gt;= 100</label>
+		</transition>
+		<transition id="id29">
+			<source ref="id20"/>
+			<target ref="id18"/>
+			<label kind="assignment" x="-17" y="-204">total += 20,
+x := 0</label>
+			<nail x="221" y="-161"/>
+			<nail x="-212" y="-161"/>
+		</transition>
+		<transition id="id30">
+			<source ref="id19"/>
+			<target ref="id20"/>
+			<label kind="synchronisation" x="85" y="-102">get!</label>
+		</transition>
+		<transition id="id31">
+			<source ref="id18"/>
+			<target ref="id19"/>
+			<label kind="guard" x="-136" y="-102">total &lt; 100</label>
+		</transition>
+	</template>
+	<system>// Place template instantiations here.
+
+// List one or more processes to be composed into a system.
+system Producer, Consumer, Buffer;
+</system>
+	<queries>
+		<option key="--diagnostic" value="1"/>
+		<query>
+			<formula>A[] not (deadlock &amp;&amp; !(Producer.done &amp;&amp; Buffer.done &amp;&amp; Consumer.done))
+</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2026-01-22 15:50:41 +0100">
+				<option key="--diagnostic" value="1"/>
+			</result>
+		</query>
+		<query>
+			<formula>A[] (deadlock imply (Producer.done &amp;&amp; Buffer.done &amp;&amp; Consumer.done))
+</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2026-01-22 15:50:39 +0100">
+				<option key="--diagnostic" value="1"/>
+			</result>
+		</query>
+		<query>
+			<formula>A[] not deadlock
+</formula>
+			<comment/>
+			<result outcome="failure" type="quality" timestamp="2026-01-22 15:50:37 +0100">
+				<option key="--diagnostic" value="1"/>
+			</result>
+		</query>
+	</queries>
+</nta>
